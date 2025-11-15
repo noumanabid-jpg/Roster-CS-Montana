@@ -24,8 +24,26 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    // ❗ moved inside try so any getStore error is caught
-    const store = getStore(STORE_NAME);
+    const siteID = process.env.NETLIFY_SITE_ID;
+    const token = process.env.NETLIFY_BLOBS_TOKEN;
+
+    if (!siteID || !token) {
+      console.error("[schedule] Missing NETLIFY_SITE_ID or NETLIFY_BLOBS_TOKEN");
+      return {
+        statusCode: 500,
+        headers: corsHeaders,
+        body: JSON.stringify({
+          error: "Missing blobs configuration",
+          detail: "NETLIFY_SITE_ID or NETLIFY_BLOBS_TOKEN not set",
+        }),
+      };
+    }
+
+    const store = getStore({
+      name: STORE_NAME,
+      siteID,
+      token,
+    });
 
     if (method === "GET") {
       const json = await store.get(key, { type: "json" as const });
