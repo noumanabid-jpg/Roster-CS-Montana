@@ -932,9 +932,7 @@ const App: React.FC = () => {
                         .filter((a) => levelFilter === "all" || a.level === levelFilter)
                         .filter((a) => !isAgentOnVacation(a.name, selectedDate, vacations))
                         .map((a) => {
-                          const blk =
-                            roster[a.name]?.[selectedDay] ||
-                            (roster[a.name]?.[selectedDay] = { ...DEFAULT_DAY });
+                          const blk = roster[a.name]?.[selectedDay] ?? DEFAULT_DAY;
                           return (
                             <React.Fragment key={a.name + selectedDay}>
                               <div className="py-2 pr-3 text-sm sticky left-0 bg-slate-50 dark:bg-slate-950 z-20 w-[160px] shrink-0">
