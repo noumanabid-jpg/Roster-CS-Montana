@@ -10,18 +10,7 @@ export const handler: Handler = async (event) => {
 
   const store = getStore(STORE_NAME);
 
-  const tokenHeader = event.headers["x-wfm-token"] || event.headers["X-Wfm-Token"];
-  const expected = process.env.WFM_TOKEN;
-
-  if (expected && method === "PUT") {
-    if (!tokenHeader || tokenHeader !== expected) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ error: "Unauthorized" })
-      };
-    }
-  }
-
+  // CORS preflight
   if (method === "OPTIONS") {
     return {
       statusCode: 200,
@@ -48,8 +37,10 @@ export const handler: Handler = async (event) => {
           body: JSON.stringify({ error: "Missing body" })
         };
       }
+
       const payload = JSON.parse(event.body);
       await store.setJSON(key, payload);
+
       return {
         statusCode: 200,
         headers: corsHeaders(),
@@ -57,6 +48,7 @@ export const handler: Handler = async (event) => {
       };
     }
 
+    // any other method
     return {
       statusCode: 405,
       headers: corsHeaders(),
@@ -67,7 +59,10 @@ export const handler: Handler = async (event) => {
     return {
       statusCode: 500,
       headers: corsHeaders(),
-      body: JSON.stringify({ error: "Internal error", detail: String(err?.message || err) })
+      body: JSON.stringify({
+        error: "Internal error",
+        detail: String(err?.message || err)
+      })
     };
   }
 };
