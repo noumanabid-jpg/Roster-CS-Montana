@@ -3,29 +3,36 @@ import { getStore } from "@netlify/blobs";
 
 const STORE_NAME = "montana-wfm";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET,PUT,OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type,x-wfm-token",
+};
+
 export const handler: Handler = async (event) => {
   const method = event.httpMethod || "GET";
   const workspace = event.queryStringParameters?.workspace || "montana";
   const key = `${workspace}.json`;
 
-  const store = getStore(STORE_NAME);
-
   // CORS preflight
   if (method === "OPTIONS") {
     return {
       statusCode: 200,
-      headers: corsHeaders(),
-      body: ""
+      headers: corsHeaders,
+      body: "",
     };
   }
 
   try {
+    // ❗ moved inside try so any getStore error is caught
+    const store = getStore(STORE_NAME);
+
     if (method === "GET") {
       const json = await store.get(key, { type: "json" as const });
       return {
         statusCode: 200,
-        headers: corsHeaders(),
-        body: JSON.stringify(json || {})
+        headers: corsHeaders,
+        body: JSON.stringify(json || {}),
       };
     }
 
@@ -33,8 +40,8 @@ export const handler: Handler = async (event) => {
       if (!event.body) {
         return {
           statusCode: 400,
-          headers: corsHeaders(),
-          body: JSON.stringify({ error: "Missing body" })
+          headers: corsHeaders,
+          body: JSON.stringify({ error: "Missing body" }),
         };
       }
 
@@ -43,34 +50,25 @@ export const handler: Handler = async (event) => {
 
       return {
         statusCode: 200,
-        headers: corsHeaders(),
-        body: JSON.stringify({ ok: true })
+        headers: corsHeaders,
+        body: JSON.stringify({ ok: true }),
       };
     }
 
-    // any other method
     return {
       statusCode: 405,
-      headers: corsHeaders(),
-      body: JSON.stringify({ error: "Method not allowed" })
+      headers: corsHeaders,
+      body: JSON.stringify({ error: "Method not allowed" }),
     };
   } catch (err: any) {
     console.error("[schedule] error", err);
     return {
       statusCode: 500,
-      headers: corsHeaders(),
+      headers: corsHeaders,
       body: JSON.stringify({
         error: "Internal error",
-        detail: String(err?.message || err)
-      })
+        detail: String(err?.message || err),
+      }),
     };
   }
 };
-
-function corsHeaders() {
-  return {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET,PUT,OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type,x-wfm-token"
-  };
-}
